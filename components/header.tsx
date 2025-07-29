@@ -42,12 +42,6 @@ export function Header({ onMenuClick }: HeaderProps) {
               Back to Home
             </Link>
           </Button>
-
-          <Button variant="outline" size="sm" className="hidden sm:flex bg-transparent">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-
           <ThemeToggle />
 
           <DropdownMenu>

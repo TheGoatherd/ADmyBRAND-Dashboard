@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -34,7 +42,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
-import { Plus, Play, Pause, Edit, Eye, Target, DollarSign, Users, MousePointer, Filter } from "lucide-react"
+import { Plus, Play, Pause, Edit, Eye, Target, DollarSign, Users, MousePointer, Filter, ChevronDown } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"]
@@ -45,19 +53,62 @@ export function CampaignsPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const { toast } = useToast()
+  const [isLive, setIsLive] = useState(false)
+  const [updateInterval, setUpdateInterval] = useState<number | null>(null)
+
+  const liveUpdate = useCallback(() => {
+    setData(generateCampaignsData())
+  }, [])
 
   useEffect(() => {
     setTimeout(() => {
       setData(generateCampaignsData())
       setLoading(false)
     }, 1000)
-
-    const interval = setInterval(() => {
-      setData(generateCampaignsData())
-    }, 30000)
-
-    return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    if (isLive && updateInterval) {
+      intervalId = setInterval(liveUpdate, updateInterval)
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isLive, updateInterval, liveUpdate])
+
+  const exportData = useCallback(() => {
+    if (!data?.campaigns?.length) {
+      toast({
+        title: "No data to export",
+        description: "There is no campaigns data available to export.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const header = Object.keys(data.campaigns[0]).join(",")
+    const csvContent = data.campaigns
+      .map((row: any) => Object.values(row).join(","))
+      .join("\n")
+
+    const blob = new Blob([`${header}\n${csvContent}`], { type: "text/csv;charset=utf-8;" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "campaigns.csv"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export successful",
+      description: "Campaigns data has been exported to CSV.",
+    })
+  }, [data, toast])
 
   const handleCreateCampaign = () => {
     setIsCreateDialogOpen(false)
@@ -91,6 +142,46 @@ export function CampaignsPage() {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
+          <Button variant="outline" onClick={exportData}>
+            Export
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={isLive ? "secondary" : "outline"} size="sm" className="w-[120px]">
+                {isLive ? "Live: On" : "Live: Off"}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Update Intensity</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(1000)
+                }}
+              >
+                High (1s)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(5000)
+                }}
+              >
+                Low (5s)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(false)
+                  setUpdateInterval(null)
+                }}
+              >
+                Off
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>

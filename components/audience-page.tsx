@@ -1,12 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useToast } from "@/components/ui/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   BarChart,
   Bar,
@@ -21,26 +30,70 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
-import { Users, UserPlus, UserMinus, Heart, MessageCircle, Share2, Calendar, MapPin, Clock } from "lucide-react"
+import { Users, UserPlus, UserMinus, Heart, MessageCircle, Share2, Calendar, MapPin, Clock, ChevronDown } from "lucide-react"
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"]
 
 export function AudiencePage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any>(null)
+  const [isLive, setIsLive] = useState(false)
+  const [updateInterval, setUpdateInterval] = useState<number | null>(null)
+  const { toast } = useToast()
+
+  const liveUpdate = useCallback(() => {
+    setData(generateAudienceData())
+  }, [])
 
   useEffect(() => {
     setTimeout(() => {
       setData(generateAudienceData())
       setLoading(false)
     }, 1000)
-
-    const interval = setInterval(() => {
-      setData(generateAudienceData())
-    }, 20000)
-
-    return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    if (isLive && updateInterval) {
+      intervalId = setInterval(liveUpdate, updateInterval)
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isLive, updateInterval, liveUpdate])
+
+  const exportData = useCallback(() => {
+    if (!data?.audienceSegments?.length) {
+      toast({
+        title: "No data to export",
+        description: "There is no audience segments data available to export.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const header = Object.keys(data.audienceSegments[0]).join(",")
+    const csvContent = data.audienceSegments
+      .map((row: any) => Object.values(row).join(","))
+      .join("\n")
+
+    const blob = new Blob([`${header}\n${csvContent}`], { type: "text/csv;charset=utf-8;" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "audience-segments.csv"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export successful",
+      description: "Audience segments data has been exported to CSV.",
+    })
+  }, [data, toast])
 
   if (loading) {
     return <AudienceSkeleton />
@@ -56,7 +109,44 @@ export function AudiencePage() {
         </div>
         <div className="flex space-x-2">
           <Button variant="outline">Create Segment</Button>
-          <Button>Export Audience</Button>
+          <Button onClick={exportData}>Export Audience</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={isLive ? "secondary" : "outline"} size="sm" className="w-[120px]">
+                {isLive ? "Live: On" : "Live: Off"}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Update Intensity</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(1000)
+                }}
+              >
+                High (1s)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(5000)
+                }}
+              >
+                Low (5s)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(false)
+                  setUpdateInterval(null)
+                }}
+              >
+                Off
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

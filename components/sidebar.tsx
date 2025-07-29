@@ -71,16 +71,6 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
           })}
         </nav>
       </ScrollArea>
-
-      <div className="border-t p-4">
-        <div className="rounded-lg bg-muted p-4">
-          <h3 className="text-sm font-medium">Upgrade to Pro</h3>
-          <p className="text-xs text-muted-foreground mt-1">Unlock advanced AI insights and unlimited campaign tracking</p>
-          <Button size="sm" className="w-full mt-3">
-            Upgrade Now
-          </Button>
-        </div>
-      </div>
     </div>
   )
 

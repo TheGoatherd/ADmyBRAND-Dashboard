@@ -1,12 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { DateRangePicker } from "@/components/date-range-picker"
+import { useToast } from "@/components/ui/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   LineChart,
   Line,
@@ -33,6 +42,7 @@ import {
   Target,
   ArrowUpRight,
   ArrowDownRight,
+  ChevronDown,
 } from "lucide-react"
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"]
@@ -40,6 +50,13 @@ const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"]
 export function RevenuePage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any>(null)
+  const [isLive, setIsLive] = useState(false)
+  const [updateInterval, setUpdateInterval] = useState<number | null>(null)
+  const { toast } = useToast()
+
+  const liveUpdate = useCallback(() => {
+    setData(generateRevenueData())
+  }, [])
 
   useEffect(() => {
     setTimeout(() => {
@@ -48,6 +65,49 @@ export function RevenuePage() {
     }, 1000)
     // Removed the interval that was causing automatic data updates every 25 seconds
   }, [])
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    if (isLive && updateInterval) {
+      intervalId = setInterval(liveUpdate, updateInterval)
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isLive, updateInterval, liveUpdate])
+
+  const exportData = useCallback(() => {
+    if (!data?.revenueTrend?.length) {
+      toast({
+        title: "No data to export",
+        description: "There is no revenue trend data available to export.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const header = Object.keys(data.revenueTrend[0]).join(",")
+    const csvContent = data.revenueTrend
+      .map((row: any) => Object.values(row).join(","))
+      .join("\n")
+
+    const blob = new Blob([`${header}\n${csvContent}`], { type: "text/csv;charset=utf-8;" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "revenue-trend.csv"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export successful",
+      description: "Revenue trend data has been exported to CSV.",
+    })
+  }, [data, toast])
 
   if (loading) {
     return <RevenueSkeleton />
@@ -64,7 +124,44 @@ export function RevenuePage() {
         <div className="flex space-x-2">
           <DateRangePicker />
           <Button variant="outline">Generate Report</Button>
-          <Button>Export Data</Button>
+          <Button onClick={exportData}>Export Data</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={isLive ? "secondary" : "outline"} size="sm" className="w-[120px]">
+                {isLive ? "Live: On" : "Live: Off"}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Update Intensity</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(1000)
+                }}
+              >
+                High (1s)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(5000)
+                }}
+              >
+                Low (5s)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(false)
+                  setUpdateInterval(null)
+                }}
+              >
+                Off
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -260,7 +357,7 @@ export function RevenuePage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"

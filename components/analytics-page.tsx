@@ -1,11 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { DateRangePicker } from "@/components/date-range-picker"
+import { useToast } from "@/components/ui/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   BarChart,
   Bar,
@@ -31,6 +40,7 @@ import {
   Smartphone,
   Monitor,
   Tablet,
+  ChevronDown,
 } from "lucide-react"
 
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"]
@@ -38,6 +48,13 @@ const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#8dd1e1"]
 export function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<any>(null)
+  const [isLive, setIsLive] = useState(false)
+  const [updateInterval, setUpdateInterval] = useState<number | null>(null)
+  const { toast } = useToast()
+
+  const liveUpdate = useCallback(() => {
+    setData(generateAnalyticsData())
+  }, [])
 
   useEffect(() => {
     // Simulate data loading
@@ -45,14 +62,50 @@ export function AnalyticsPage() {
       setData(generateAnalyticsData())
       setLoading(false)
     }, 1000)
-
-    // Real-time updates
-    const interval = setInterval(() => {
-      setData(generateAnalyticsData())
-    }, 15000)
-
-    return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    if (isLive && updateInterval) {
+      intervalId = setInterval(liveUpdate, updateInterval)
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isLive, updateInterval, liveUpdate])
+
+  const exportData = useCallback(() => {
+    if (!data?.trafficTrends?.length) {
+      toast({
+        title: "No data to export",
+        description: "There is no traffic trends data available to export.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const header = Object.keys(data.trafficTrends[0]).join(",")
+    const csvContent = data.trafficTrends
+      .map((row: any) => Object.values(row).join(","))
+      .join("\n")
+
+    const blob = new Blob([`${header}\n${csvContent}`], { type: "text/csv;charset=utf-8;" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "analytics-traffic-trends.csv"
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+
+    toast({
+      title: "Export successful",
+      description: "Traffic trends data has been exported to CSV.",
+    })
+  }, [data, toast])
 
   if (loading) {
     return <AnalyticsSkeleton />
@@ -68,7 +121,46 @@ export function AnalyticsPage() {
         </div>
         <div className="flex space-x-2">
           <DateRangePicker />
-          <Button variant="outline">Export Report</Button>
+          <Button variant="outline" onClick={exportData}>
+            Export Report
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={isLive ? "secondary" : "outline"} size="sm" className="w-[120px]">
+                {isLive ? "Live: On" : "Live: Off"}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Update Intensity</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(1000)
+                }}
+              >
+                High (1s)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(5000)
+                }}
+              >
+                Low (5s)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(false)
+                  setUpdateInterval(null)
+                }}
+              >
+                Off
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -176,7 +268,7 @@ export function AnalyticsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"

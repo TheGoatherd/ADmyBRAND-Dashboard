@@ -1,22 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { MetricsCards } from "@/components/metrics-cards"
 import { ChartsSection } from "@/components/charts-section"
 import { DataTable } from "@/components/data-table"
 import { DateRangePicker } from "@/components/date-range-picker"
 import { generateMockData, type AnalyticsData } from "@/lib/mock-data"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Download } from "lucide-react"
+import { RefreshCw, Download, ChevronDown } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function OverviewPage() {
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const { toast } = useToast()
+  const [isLive, setIsLive] = useState(false)
+  const [updateInterval, setUpdateInterval] = useState<number | null>(null)
 
-  const refreshData = () => {
+  const refreshData = useCallback(() => {
     setLoading(true)
     setTimeout(() => {
       setData(generateMockData())
@@ -27,12 +37,29 @@ export function OverviewPage() {
         description: "Analytics data has been updated successfully.",
       })
     }, 1000)
-  }
+  }, [toast])
+
+  const liveUpdate = useCallback(() => {
+    setData(generateMockData())
+    setLastUpdated(new Date())
+  }, [])
 
   useEffect(() => {
     // Initial data load
     refreshData()
-  }, [])
+  }, [refreshData])
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null
+    if (isLive && updateInterval) {
+      intervalId = setInterval(liveUpdate, updateInterval)
+    }
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [isLive, updateInterval, liveUpdate])
 
   const exportData = () => {
     if (!data) return
@@ -74,6 +101,43 @@ export function OverviewPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={isLive ? "secondary" : "outline"} size="sm" className="w-[120px]">
+                {isLive ? "Live: On" : "Live: Off"}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Update Intensity</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(1000)
+                }}
+              >
+                High (1s)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(true)
+                  setUpdateInterval(5000)
+                }}
+              >
+                Low (5s)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setIsLive(false)
+                  setUpdateInterval(null)
+                }}
+              >
+                Off
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
