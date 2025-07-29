@@ -69,10 +69,6 @@ Unified platform for campaign oversight, audience intelligence, revenue optimiza
 ---
 
 ## 📂 File Structure
-
-```md
-# ADMYBRAND-DASHBOARD File Structure
-
 ```bash
 ADMYBRAND-DASHBOARD/
 ├── app/                       # Next.js App Router directory (contains route segments and layouts)
