@@ -131,7 +131,6 @@ Open http://localhost:3000 in your browser
 ## 🧑‍💻 Author & Maintenance  
 **Ankit** - Lead Developer & Designer  
 [![GitHub](https://img.shields.io/badge/-@TheGoatherd-181717?style=flat&logo=github)](https://github.com/TheGoatherd)
-[![Portfolio](https://img.shields.io/badge/-Portfolio-FF7139?style=flat&logo=firefox)]([https://thegoatherd.dev](https://github.com/TheGoatherd))
 [![Email](https://img.shields.io/badge/-Contact_Me-D14836?style=flat&logo=gmail)](mailto:iamankit4435@gmail.com)
 
 > *"Built with passion for data-driven marketing solutions"*  
