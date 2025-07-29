@@ -71,32 +71,64 @@ Unified platform for campaign oversight, audience intelligence, revenue optimiza
 ## 📂 File Structure
 
 ```md
-ADmyBRAND-Dashboard/
-├── public/
-│   ├── favicon.ico
-│   ├── images/
-│   └── assets/
-├── src/
-│   ├── components/
-│   │   ├── analytics/  # Revenue/Audience modules
-│   │   ├── charts/     # Rechart components
-│   │   ├── ui/         # Cards/Tabs/Tables
-│   ├── pages/
-│   │   ├── index.tsx     # Landing
-│   │   ├── dashboard.tsx # Main interface
-│   ├── styles/
-│   │   └── globals.css   # Tailwind imports
-│   ├── data/
-│   │   └── mockData.ts   # Sample datasets
-│   ├── hooks/          # Custom hooks
-│   ├── lib/            # Utilities
-│   ├── utils/          # Helper functions
-│   └── app.tsx         # Root component
-├── .env.local          # Environment variables
-├── tailwind.config.ts  # Design tokens
-├── tsconfig.json       # TypeScript rules
-├── package.json
-└── README.md
+# ADMYBRAND-DASHBOARD File Structure
+
+```bash
+ADMYBRAND-DASHBOARD/
+├── app/                       # Next.js App Router directory (contains route segments and layouts)
+│   └── ...                    # (Placeholder for Next.js 13+ routing structure)
+│
+├── components/                # All React components organized by feature
+│   ├── ui/                    # Reusable UI primitives (buttons, cards, inputs)
+│   ├── analytics-page.tsx     # Analytics dashboard page component
+│   ├── audience-page.tsx      # Audience demographics page
+│   ├── campaigns-page.tsx     # Marketing campaigns management
+│   ├── charts-section.tsx     # Data visualization components (Recharts)
+│   ├── data-table.tsx         # Tabular data display (likely using TanStack Table)
+│   ├── date-range-picker.tsx  # Date selection component for reports
+│   ├── header.tsx             # Global header/navigation bar
+│   ├── help-page.tsx          # Support/FAQ section
+│   ├── landing-page.tsx       # Public-facing homepage
+│   ├── metrics-cards.tsx      # KPI summary cards (revenue, users, etc.)
+│   ├── overview-page.tsx      # Dashboard summary view
+│   ├── revenue-page.tsx       # Financial performance reports
+│   ├── settings-page.tsx      # User preferences and account settings
+│   ├── sidebar.tsx            # Main navigation sidebar
+│   ├── theme-provider.tsx     # Context provider for dark/light theme
+│   └── theme-toggle.tsx       # Theme switcher component
+│
+├── hooks/                     # Custom React hooks
+│   ├── use-mobile.tsx         # Detects mobile viewport (e.g. for responsive layouts)
+│   └── use-toast.tsx          # Notification toast system (similar to react-hot-toast)
+│
+├── lib/                       # Third-party libraries/API clients
+│   └── ...                    # (External service integrations)
+│
+├── public/                    # Static assets served at root path
+│   ├── placeholder-logo.png   # Fallback brand logo (PNG)
+│   ├── placeholder-logo.svg   # Fallback brand logo (vector)
+│   ├── placeholder-user.jpg   # Default user avatar
+│   ├── placeholder.jpg        # Generic image placeholder
+│   └── placeholder.svg        # Generic SVG placeholder
+│
+├── styles/                    # Global CSS styles
+│   └── globals.css            # Main stylesheet (imports Tailwind + custom CSS)
+│
+### CORE FILES ###
+├── dashboard-layout.tsx       # Root layout for dashboard routes (wraps all pages)
+├── mock-datats/               # Mock datasets for development (⚠️ typo, suggest renaming to mock-data)
+├── utils.tsx                  # Shared utility functions/helpers
+│
+### CONFIGURATION FILES ###
+├── components.json            # UI components registry (used by Shadcn/ui)
+├── dashboard.tsx              # Main dashboard entrypoint (legacy pages router)
+├── next-env.d.ts              # Next.js TypeScript type declarations
+├── next.config.mjs            # Next.js configuration (ES modules)
+├── package-lock.json          # NPM dependency tree lockfile
+├── package.json               # Project metadata and dependencies
+├── pnpm-lock.yaml             # PNPM lockfile (alternative package manager)
+├── postcss.config.mjs         # PostCSS configuration (processes Tailwind)
+└── tailwind.config.ts         # Tailwind CSS customization
 ```
 
 ## 🔧 Installation  
