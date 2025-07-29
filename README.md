@@ -3,7 +3,7 @@
 A modern, intelligent, and visually immersive marketing analytics dashboard built for brands that demand **clarity, control, and creative insight**.
 
 ## 🚀 Live Demo  
-👉 [admybrand-dashboarddd.vercel.app](admybrand-dashboarddd.vercel.app)
+👉 https://admybrand-dashboarddd.vercel.app/
 
 ---
 
@@ -98,7 +98,7 @@ ADmyBRAND-Dashboard/
 ├── package.json
 └── README.md
 ```
-markdown
+
 ## 🔧 Installation  
 Run locally in 4 simple steps:  
 
