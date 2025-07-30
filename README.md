@@ -5,6 +5,11 @@ A modern, intelligent, and visually immersive marketing analytics dashboard buil
 ## 🚀 Live Demo  
 👉 https://admybrand-dashboarddd.vercel.app/
 
+
+## 📚 Detailed Documentation  
+Explore comprehensive guides, API references, and implementation details:  
+👉 [https://admybrand-readme.vercel.app/](https://admybrand-readme.vercel.app/)  
+
 ---
 
 ## 🧩 Core Features  
